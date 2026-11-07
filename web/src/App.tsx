@@ -123,6 +123,7 @@ const LdapEditPage = React.lazy(() => import("@/pages/LdapEditPage"));
 const LdapSyncPage = React.lazy(() => import("@/pages/LdapSyncPage"));
 
 // ---- public pages ------------------------------------------------------------
+const HostedLoginRoute = React.lazy(() => import("@/components/auth/HostedLoginRoute"));
 const LoginPage = React.lazy(() => import("@/pages/auth/LoginPage"));
 const SignupPage = React.lazy(() => import("@/pages/auth/SignupPage"));
 const ForgetPage = React.lazy(() => import("@/pages/auth/ForgetPage"));
@@ -225,6 +226,7 @@ export default function App() {
         <Route path="/login" element={<LoginPage type="login" />} />
         <Route path="/login/:owner" element={<LoginPage type="login" />} />
         <Route path="/login/oauth/authorize" element={<LoginPage type="code" />} />
+        <Route path="/login/t/:id" element={<HostedLoginRoute />} />
         <Route path="/login/oauth/device/:userCode" element={<LoginPage type="device" />} />
         <Route path="/login/saml/authorize/:owner/:applicationName" element={<LoginPage type="saml" />} />
         <Route path="/cas/:owner/:casApplicationName/login" element={<LoginPage type="cas" />} />

@@ -1,3 +1,4 @@
+import {getHostedSearch} from "@/components/auth/hosted-context";
 // Copyright 2021 The Casdoor Authors. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +25,7 @@ function getRefinedValue(value) {
 }
 
 export function getCasParameters(params?: any) {
-  const queries = (params !== undefined) ? params : new URLSearchParams(window.location.search);
+  const queries = (params !== undefined) ? params : new URLSearchParams(getHostedSearch());
   const service = getRefinedValue(queries.get("service"));
   const renew = getRefinedValue(queries.get("renew"));
   const gateway = getRefinedValue(queries.get("gateway"));
@@ -36,7 +37,7 @@ export function getCasParameters(params?: any) {
 }
 
 function getRawGetParameter(key) {
-  const fullUrl = window.location.href;
+  const fullUrl = window.location.origin + window.location.pathname + getHostedSearch();
   const token = fullUrl.split(`${key}=`)[1];
   if (!token) {
     return "";
@@ -52,7 +53,7 @@ function getRawGetParameter(key) {
 }
 
 export function getCasLoginParameters(owner, name) {
-  const queries = new URLSearchParams(window.location.search);
+  const queries = new URLSearchParams(getHostedSearch());
   // CAS service
   let service = getRawGetParameter("service");
   if (service === "") {
@@ -80,7 +81,7 @@ export function getParameterIgnoreCase(params: URLSearchParams, key: string): st
 // getRelayState returns the RelayState in the URL, it is used by the SAML IdP-initiated SSO,
 // where there is no SAMLRequest and getOAuthGetParameters() returns null
 export function getRelayState() {
-  const queries = new URLSearchParams(window.location.search);
+  const queries = new URLSearchParams(getHostedSearch());
   const lowercaseQueries = {};
   queries.forEach((val, key) => {lowercaseQueries[key.toLowerCase()] = val;});
 
@@ -88,7 +89,7 @@ export function getRelayState() {
 }
 
 export function getOAuthGetParameters(params?: any): any {
-  const queries = (params !== undefined) ? params : new URLSearchParams(window.location.search);
+  const queries = (params !== undefined) ? params : new URLSearchParams(getHostedSearch());
   const lowercaseQueries = {};
   queries.forEach((val, key) => {lowercaseQueries[key.toLowerCase()] = val;});
 
@@ -202,7 +203,7 @@ export function getPromptLink(applicationName: string, oAuthParams: any, code: s
 }
 
 export function getStateFromQueryParams(applicationName, providerName, method, isShortState) {
-  let query = window.location.search;
+  let query = getHostedSearch();
   query = `${query}&application=${encodeURIComponent(applicationName)}&provider=${encodeURIComponent(providerName)}&method=${method}`;
   if (method === "link") {
     query = `${query}&from=${Setting.getRoutePath()}&linkNonce=${newLinkNonce()}`;

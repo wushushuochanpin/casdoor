@@ -1,3 +1,5 @@
+import {getHostedSearch} from "@/components/auth/hosted-context";
+import {HostedWechatLogin, getHostedWechatProvider} from "@/components/auth/HostedWechatLogin";
 import * as React from "react";
 import i18next from "i18next";
 import {Link, useLocation, useNavigate, useParams} from "react-router-dom";
@@ -298,7 +300,8 @@ interface LoginPageProps {
 
 export default function LoginPage({type = "login", application: applicationProp, preview}: LoginPageProps) {
   const params = useParams();
-  const location = useLocation();
+  const routeLocation = useLocation();
+  const location = {...routeLocation, search: getHostedSearch()};
   const navigate = useNavigate();
   const {account, reload} = useAccount();
 
@@ -355,7 +358,7 @@ export default function LoginPage({type = "login", application: applicationProp,
     if (preview) {
       return;
     }
-    localStorage.setItem("signinUrl", location.pathname + location.search);
+    localStorage.setItem("signinUrl", window.location.pathname + window.location.search);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -513,7 +516,7 @@ export default function LoginPage({type = "login", application: applicationProp,
     }
     // The backend asks for an explicit consent before handing out the code.
     if (res.data?.required === true) {
-      reload().then(() => navigate(`/consent/${application.name}?${window.location.search.substring(1)}`));
+      reload().then(() => navigate(`/consent/${application.name}?${getHostedSearch().substring(1)}`));
       return;
     }
     if (Setting.hasPromptPage(application)) {
@@ -565,7 +568,7 @@ export default function LoginPage({type = "login", application: applicationProp,
       postCodeLoginAction(res);
     } else if (responseTypes.includes("token") || responseTypes.includes("id_token")) {
       if (res.data?.required === true) {
-        reload().then(() => navigate(`/consent/${application.name}?${window.location.search.substring(1)}`));
+        reload().then(() => navigate(`/consent/${application.name}?${getHostedSearch().substring(1)}`));
         return;
       }
       Util.sendOAuthResponse(authParams, Util.getTokenResponsePayload(responseType, res));
@@ -748,7 +751,7 @@ export default function LoginPage({type = "login", application: applicationProp,
 
   /** the organization is encoded in the client id or the path, so keep the query string */
   const switchLoginOrganization = (name: string) => {
-    const searchParams = new URLSearchParams(window.location.search);
+    const searchParams = new URLSearchParams(getHostedSearch());
 
     const clientId = searchParams.get("client_id");
     if (clientId) {
@@ -1148,7 +1151,9 @@ export default function LoginPage({type = "login", application: applicationProp,
   // With no form and a single third-party provider there is nothing to choose.
   // The redirect runs once from an effect: doing it in render fired one upstream
   // authorization request per re-render, and the provider consumed the first one.
+  const hostedWechatProvider = getHostedWechatProvider(application);
   const singleProviderAuthUrl = React.useMemo(() => {
+    if (hostedWechatProvider) return null;
     if (!application || preview === "auto" || preview === "theme" || promptNone || application.disableSignin || application.organizationObj?.disableSignin) {
       return null;
     }
@@ -1162,7 +1167,7 @@ export default function LoginPage({type = "login", application: applicationProp,
       return null;
     }
     return Provider.getAuthUrl(application, visibleOAuthProviderItems[0].provider, "signin");
-  }, [application, preview, promptNone]);
+  }, [application, preview, promptNone, hostedWechatProvider]);
   const singleProviderRedirected = React.useRef(false);
   React.useEffect(() => {
     if (singleProviderAuthUrl === null || singleProviderRedirected.current) {
@@ -1240,7 +1245,7 @@ export default function LoginPage({type = "login", application: applicationProp,
   // shown again when that sign-in failed
   const magicLinkPending = !preview && (magicLinkVerifying
     ? loading
-    : new URLSearchParams(window.location.search).has("magicLinkToken"));
+    : new URLSearchParams(getHostedSearch()).has("magicLinkToken"));
   if (magicLinkPending) {
     return <AuthLoading application={application} preview={!!preview} />;
   }
@@ -1303,6 +1308,12 @@ export default function LoginPage({type = "login", application: applicationProp,
         </Alert>
       </AuthLayout>
     );
+  }
+
+  if (hostedWechatProvider && !preview) {
+    return <HostedWechatLogin application={application} provider={hostedWechatProvider}
+      accountPending={account === undefined} signedIn={!promptLogin && !!account && account.owner === application.organization}
+      busy={loading} error={msg} onContinue={loginAsCurrentAccount} />;
   }
 
   const captchaProvider = getCaptchaProvider(application);
