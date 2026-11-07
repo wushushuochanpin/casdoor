@@ -1197,7 +1197,7 @@ export default function UserEditPage({self}: {self?: boolean} = {}) {
       backTo={self ? "/" : "/users"}
       onSave={save}
       saving={saving}
-      extraActions={tabNames.length > 1 ? (
+      extraActions={tabNames.length > 0 ? (
         <div className="flex items-center gap-1 rounded-md border p-0.5">
           <button
             onClick={() => setViewMode("master-detail")}
@@ -1238,30 +1238,27 @@ export default function UserEditPage({self}: {self?: boolean} = {}) {
           <div className={formGridClass}>
             {Object.entries(rows).map(([name, row]) => <React.Fragment key={name}>{row}</React.Fragment>)}
           </div>
-        ) : tabNames.length <= 1 ? (
-          <div className={formGridClass}>
-            {rowsOfTab(tabNames[0] ?? "")}
-            {extraRows}
-          </div>
         ) : viewMode === "master-detail" ? (
           // 双栏视图：左侧 tab 导航，右侧内容
-          <div className="flex gap-6">
-            <div className="w-44 flex-shrink-0 space-y-1 border-r pr-4">
+          <div className="flex flex-col gap-6 md:flex-row">
+            <div className="space-y-1 md:w-44 md:flex-shrink-0 md:border-r md:pr-4">
               {tabNames.map((tab) => {
                 const tabValue = tab || DEFAULT_TAB;
                 const isActive = currentTab === tabValue;
                 return (
-                  <div
+                  <button
                     key={tabValue}
+                    type="button"
                     onClick={() => selectTab(tabValue)}
-                    className={`cursor-pointer rounded-md px-3 py-2 text-sm transition-colors ${
+                    aria-current={isActive ? "page" : undefined}
+                    className={`block w-full rounded-md px-3 py-2 text-left text-sm transition-colors ${
                       isActive
                         ? "bg-primary/10 font-medium text-primary border-l-2 border-primary"
                         : "text-muted-foreground hover:bg-accent border-l-2 border-transparent"
                     }`}
                   >
                     {tab === "" ? i18next.t("general:Default") : tab}
-                  </div>
+                  </button>
                 );
               })}
             </div>
