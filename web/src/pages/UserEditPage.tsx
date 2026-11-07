@@ -1059,74 +1059,70 @@ export default function UserEditPage({self}: {self?: boolean} = {}) {
     ),
     "Roles": (
       <AccountItemRow name="Roles" labelKey="general:Roles">
-        <div className="flex flex-wrap gap-1">
-          {(user.roles ?? []).length === 0 ? (
-            <span className="text-sm text-muted-foreground">{i18next.t("general:No data")}</span>
-          ) : (
-            (user.roles ?? []).map((role: any) => {
-              const sourceGroups: string[] = role.sourceGroups ?? [];
-              const key = `${role.owner}/${role.name}`;
-              if (sourceGroups.length === 0) {
-                return (
-                  <Badge key={key} variant="secondary">
-                    {role.name}
-                  </Badge>
-                );
-              }
-              return (
-                <Tooltip key={key}>
-                  <TooltipTrigger asChild>
-                    <Badge variant="outline" className="cursor-default">
-                      <Users className="h-3 w-3" />
-                      {role.name}
-                    </Badge>
-                  </TooltipTrigger>
-                  <TooltipContent>{`${i18next.t("general:Groups")}: ${sourceGroups.join(", ")}`}</TooltipContent>
-                </Tooltip>
-              );
-            })
-          )}
-        </div>
+        {(user.roles ?? []).length === 0 ? (
+          <span className="text-sm text-muted-foreground">{i18next.t("general:No data")}</span>
+        ) : (
+          <div className="w-full rounded-md border">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
+                  <th className="px-3 py-1.5 font-medium">{i18next.t("general:Name")}</th>
+                  <th className="px-3 py-1.5 font-medium">{i18next.t("general:Groups")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(user.roles ?? []).map((role: any) => {
+                  const sourceGroups: string[] = role.sourceGroups ?? [];
+                  const key = `${role.owner}/${role.name}`;
+                  return (
+                    <tr key={key} className="border-b last:border-0">
+                      <td className="px-3 py-1.5 font-mono text-xs">{role.name}</td>
+                      <td className="px-3 py-1.5 text-xs text-muted-foreground">
+                        {sourceGroups.length > 0 ? sourceGroups.join(", ") : "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </AccountItemRow>
     ),
     "Permissions": (
       <AccountItemRow name="Permissions" labelKey="general:Permissions">
-        <div className="flex flex-wrap gap-1">
-          {(user.permissions ?? []).length === 0 ? (
-            <span className="text-sm text-muted-foreground">{i18next.t("general:No data")}</span>
-          ) : (
-            (user.permissions ?? []).map((permission: any) => {
-              const sourceGroups: string[] = permission.sourceGroups ?? [];
-              const sourceRoles: string[] = permission.sourceRoles ?? [];
-              const key = `${permission.owner}/${permission.name}`;
-              if (sourceGroups.length === 0 && sourceRoles.length === 0) {
-                return (
-                  <Badge key={key} variant="secondary">
-                    {permission.name}
-                  </Badge>
-                );
-              }
-              const sourceTexts: string[] = [];
-              if (sourceRoles.length !== 0) {
-                sourceTexts.push(`${i18next.t("general:Roles")}: ${sourceRoles.join(", ")}`);
-              }
-              if (sourceGroups.length !== 0) {
-                sourceTexts.push(`${i18next.t("general:Groups")}: ${sourceGroups.join(", ")}`);
-              }
-              return (
-                <Tooltip key={key}>
-                  <TooltipTrigger asChild>
-                    <Badge variant="outline" className="cursor-default">
-                      {sourceRoles.length !== 0 ? <ShieldCheck className="h-3 w-3" /> : <Users className="h-3 w-3" />}
-                      {permission.name}
-                    </Badge>
-                  </TooltipTrigger>
-                  <TooltipContent>{sourceTexts.join(" | ")}</TooltipContent>
-                </Tooltip>
-              );
-            })
-          )}
-        </div>
+        {(user.permissions ?? []).length === 0 ? (
+          <span className="text-sm text-muted-foreground">{i18next.t("general:No data")}</span>
+        ) : (
+          <div className="w-full rounded-md border">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
+                  <th className="px-3 py-1.5 font-medium">{i18next.t("general:Name")}</th>
+                  <th className="px-3 py-1.5 font-medium">{i18next.t("general:Source")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(user.permissions ?? []).map((permission: any) => {
+                  const sourceGroups: string[] = permission.sourceGroups ?? [];
+                  const sourceRoles: string[] = permission.sourceRoles ?? [];
+                  const key = `${permission.owner}/${permission.name}`;
+                  const sourceTexts: string[] = [];
+                  if (sourceRoles.length !== 0) sourceTexts.push(`${i18next.t("general:Roles")}: ${sourceRoles.join(", ")}`);
+                  if (sourceGroups.length !== 0) sourceTexts.push(`${i18next.t("general:Groups")}: ${sourceGroups.join(", ")}`);
+                  return (
+                    <tr key={key} className="border-b last:border-0">
+                      <td className="px-3 py-1.5 font-mono text-xs">{permission.name}</td>
+                      <td className="px-3 py-1.5 text-xs text-muted-foreground">
+                        {sourceTexts.length > 0 ? sourceTexts.join(" | ") : "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </AccountItemRow>
     ),
     "Register type": (
