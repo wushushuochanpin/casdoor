@@ -1,0 +1,1 @@
+{"name":"identity-login-browser-tests","private":true,"type":"module","devDependencies":{"@playwright/test":"1.61.1"}}
