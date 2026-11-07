@@ -84,6 +84,7 @@ export default function UserEditPage({self}: {self?: boolean} = {}) {
   };
   // view mode: master-detail (双栏) or tabs (顶部标签页)
   const [viewMode, setViewMode] = React.useState<"master-detail" | "tabs">("master-detail");
+  const [activeGroup, setActiveGroup] = React.useState("basic");
   const [organization, setOrganization] = React.useState<any>({});
   const [mfaItems, setMfaItems] = React.useState<any[]>([]);
   const [removingMfa, setRemovingMfa] = React.useState(false);
@@ -1187,6 +1188,54 @@ export default function UserEditPage({self}: {self?: boolean} = {}) {
   // a stale hash would otherwise leave every tab closed
   const currentTab = tabValues.includes(activeTab) ? activeTab : tabValues[0];
 
+  // 自定义字段分组（双栏视图专用，按设计稿分组）
+  const FIELD_GROUPS = [
+    {
+      key: "basic",
+      label: i18next.t("user:Basic info", {defaultValue: "基本信息"}),
+      fields: ["Organization", "ID", "Name", "Display name", "First name", "Last name", "Avatar", "Email", "Phone", "Password", "User type", "Tag"],
+    },
+    {
+      key: "audit",
+      label: i18next.t("user:Login audit", {defaultValue: "登录审计"}),
+      fields: ["Last signin time", "Last signin IP", "Last change password time", "MFA items", "WebAuthn credentials", "Face ID", "Multi-factor authentication"],
+    },
+    {
+      key: "status",
+      label: i18next.t("user:Account status", {defaultValue: "账户状态"}),
+      fields: ["Is admin", "Is forbidden", "Is deleted", "Deleted time", "Need update password", "IP whitelist"],
+    },
+    {
+      key: "profile",
+      label: i18next.t("user:Extended profile", {defaultValue: "扩展资料"}),
+      fields: ["Country/Region", "Location", "Address", "Addresses", "Affiliation", "Title", "Homepage", "Bio", "Gender", "Birthday", "Education", "ID card type", "ID card", "Real name", "ID card info", "ID verification", "Language", "Score", "UID number", "Ranking", "Karma", "Balance credit", "Balance", "Balance currency", "Cart", "Transactions", "Properties", "Signup application", "Groups", "Managed accounts", "MFA accounts", "Consents", "Register type", "Register source"],
+    },
+    {
+      key: "roles",
+      label: i18next.t("general:Roles") || "角色",
+      fields: ["Roles"],
+    },
+    {
+      key: "perms",
+      label: i18next.t("general:Permissions") || "权限",
+      fields: ["Permissions"],
+    },
+  ];
+  // Preserve the organization's visibility policy and include unconfigured
+  // audit rows just as the tab view does.
+  const visibleNames = new Set(visibleAccountItems.map((item: any) => item.name));
+  const extraNames = Object.keys(extraInputs).filter((name) => !configuredItemNames.has(name));
+  const groupedNames = new Set(FIELD_GROUPS.flatMap((group) => group.fields));
+  const availableGroups = FIELD_GROUPS
+    .map((group) => ({
+      ...group,
+      fields: [
+        ...group.fields.filter((name) => (visibleNames.has(name) && rows[name]) || extraNames.includes(name)),
+        ...(group.key === "profile" ? visibleAccountItems.map((item: any) => item.name).filter((name: string) => !groupedNames.has(name) && rows[name]) : []),
+      ],
+    }));
+  const currentGroup = availableGroups.find(g => g.key === activeGroup) || availableGroups[0];
+
   return (
     <EditPageShell
       // the antd page calls it "My Account" when you are looking at yourself
@@ -1197,7 +1246,7 @@ export default function UserEditPage({self}: {self?: boolean} = {}) {
       backTo={self ? "/" : "/users"}
       onSave={save}
       saving={saving}
-      extraActions={tabNames.length > 0 ? (
+      extraActions={availableGroups.length > 1 ? (
         <div className="flex items-center gap-1 rounded-md border p-0.5">
           <button
             onClick={() => setViewMode("master-detail")}
@@ -1239,33 +1288,33 @@ export default function UserEditPage({self}: {self?: boolean} = {}) {
             {Object.entries(rows).map(([name, row]) => <React.Fragment key={name}>{row}</React.Fragment>)}
           </div>
         ) : viewMode === "master-detail" ? (
-          // 双栏视图：左侧 tab 导航，右侧内容
-          <div className="flex flex-col gap-6 md:flex-row">
-            <div className="space-y-1 md:w-44 md:flex-shrink-0 md:border-r md:pr-4">
-              {tabNames.map((tab) => {
-                const tabValue = tab || DEFAULT_TAB;
-                const isActive = currentTab === tabValue;
+          // 双栏视图：左侧分组导航，右侧内容
+          <div className="flex flex-col gap-0 md:flex-row">
+            <div className="space-y-0.5 border-b pb-4 md:w-44 md:flex-shrink-0 md:border-b-0 md:border-r md:pb-0 md:pr-4">
+              {availableGroups.map((group) => {
+                const isActive = currentGroup?.key === group.key;
                 return (
                   <button
-                    key={tabValue}
+                    key={group.key}
                     type="button"
-                    onClick={() => selectTab(tabValue)}
+                    onClick={() => setActiveGroup(group.key)}
                     aria-current={isActive ? "page" : undefined}
-                    className={`block w-full rounded-md px-3 py-2 text-left text-sm transition-colors ${
+                    className={`block w-full rounded-md px-3 py-1.5 text-left text-sm transition-colors ${
                       isActive
                         ? "bg-primary/10 font-medium text-primary border-l-2 border-primary"
                         : "text-muted-foreground hover:bg-accent border-l-2 border-transparent"
                     }`}
                   >
-                    {tab === "" ? i18next.t("general:Default") : tab}
+                    {group.label}
                   </button>
                 );
               })}
             </div>
-            <div className="flex-1">
+            <div className="flex-1 pt-4 md:pt-0 md:pl-6">
               <div className={formGridClass}>
-                {rowsOfTab(currentTab === DEFAULT_TAB ? "" : currentTab)}
-                {currentTab === (tabNames[0] || DEFAULT_TAB) ? extraRows : null}
+                {currentGroup?.fields.map((field) => (
+                  <React.Fragment key={field}>{extraNames.includes(field) ? <AccountItemRow labelKey={`user:${field}`}>{extraInputs[field]}</AccountItemRow> : rows[field]}</React.Fragment>
+                ))}
               </div>
             </div>
           </div>
