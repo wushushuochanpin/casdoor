@@ -1063,23 +1063,33 @@ export default function UserEditPage({self}: {self?: boolean} = {}) {
         {(user.roles ?? []).length === 0 ? (
           <span className="text-sm text-muted-foreground">{i18next.t("general:No data")}</span>
         ) : (
-          <div className="w-full rounded-md border">
-            <table className="w-full text-sm">
+          <div className="w-full overflow-x-auto rounded-md border">
+            <table className="w-full min-w-[500px] text-sm">
               <thead>
                 <tr className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
                   <th className="px-3 py-1.5 font-medium">{i18next.t("general:Name")}</th>
                   <th className="px-3 py-1.5 font-medium">{i18next.t("general:Groups")}</th>
+                  <th className="w-12 px-3 py-1.5 font-medium text-right">{i18next.t("general:Actions")}</th>
                 </tr>
               </thead>
               <tbody>
                 {(user.roles ?? []).map((role: any) => {
                   const sourceGroups: string[] = role.sourceGroups ?? [];
                   const key = `${role.owner}/${role.name}`;
+                  const handleRemove = () => {
+                    const newRoles = (user.roles ?? []).filter((r: any) => `${r.owner}/${r.name}` !== key);
+                    updateField("roles", newRoles);
+                  };
                   return (
                     <tr key={key} className="border-b last:border-0">
                       <td className="px-3 py-1.5 font-mono text-xs">{role.name}</td>
                       <td className="px-3 py-1.5 text-xs text-muted-foreground">
                         {sourceGroups.length > 0 ? sourceGroups.join(", ") : "—"}
+                      </td>
+                      <td className="px-3 py-1.5 text-right">
+                        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-destructive" onClick={handleRemove}>
+                          {i18next.t("general:Delete")}
+                        </Button>
                       </td>
                     </tr>
                   );
@@ -1095,12 +1105,13 @@ export default function UserEditPage({self}: {self?: boolean} = {}) {
         {(user.permissions ?? []).length === 0 ? (
           <span className="text-sm text-muted-foreground">{i18next.t("general:No data")}</span>
         ) : (
-          <div className="w-full rounded-md border">
-            <table className="w-full text-sm">
+          <div className="w-full overflow-x-auto rounded-md border">
+            <table className="w-full min-w-[500px] text-sm">
               <thead>
                 <tr className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
                   <th className="px-3 py-1.5 font-medium">{i18next.t("general:Name")}</th>
                   <th className="px-3 py-1.5 font-medium">{i18next.t("general:Source")}</th>
+                  <th className="w-12 px-3 py-1.5 font-medium text-right">{i18next.t("general:Actions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1111,11 +1122,20 @@ export default function UserEditPage({self}: {self?: boolean} = {}) {
                   const sourceTexts: string[] = [];
                   if (sourceRoles.length !== 0) sourceTexts.push(`${i18next.t("general:Roles")}: ${sourceRoles.join(", ")}`);
                   if (sourceGroups.length !== 0) sourceTexts.push(`${i18next.t("general:Groups")}: ${sourceGroups.join(", ")}`);
+                  const handleRemove = () => {
+                    const newPerms = (user.permissions ?? []).filter((p: any) => `${p.owner}/${p.name}` !== key);
+                    updateField("permissions", newPerms);
+                  };
                   return (
                     <tr key={key} className="border-b last:border-0">
                       <td className="px-3 py-1.5 font-mono text-xs">{permission.name}</td>
                       <td className="px-3 py-1.5 text-xs text-muted-foreground">
                         {sourceTexts.length > 0 ? sourceTexts.join(" | ") : "—"}
+                      </td>
+                      <td className="px-3 py-1.5 text-right">
+                        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-destructive" onClick={handleRemove}>
+                          {i18next.t("general:Delete")}
+                        </Button>
                       </td>
                     </tr>
                   );
@@ -1310,10 +1330,12 @@ export default function UserEditPage({self}: {self?: boolean} = {}) {
                 );
               })}
             </div>
-            <div className="flex-1 pt-4 md:pt-0 md:pl-6">
+            <div className="min-w-0 flex-1 pt-4 md:pt-0 md:pl-6">
               <div className={formGridClass}>
                 {currentGroup?.fields.map((field) => (
-                  <React.Fragment key={field}>{extraNames.includes(field) ? <AccountItemRow labelKey={`user:${field}`}>{extraInputs[field]}</AccountItemRow> : rows[field]}</React.Fragment>
+                  <div key={field} className={field === "Roles" || field === "Permissions" ? "sm:col-span-2" : ""}>
+                    {extraNames.includes(field) ? <AccountItemRow labelKey={`user:${field}`}>{extraInputs[field]}</AccountItemRow> : rows[field]}
+                  </div>
                 ))}
               </div>
             </div>
