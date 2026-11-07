@@ -1,7 +1,7 @@
 import * as React from "react";
 import i18next from "i18next";
 import {Link, useLocation, useNavigate, useParams} from "react-router-dom";
-import {ShieldCheck, Users} from "lucide-react";
+import {PanelLeft, Rows3, ShieldCheck, Users} from "lucide-react";
 import {UnauthorizedPage} from "@/components/common/UnauthorizedPage";
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
@@ -82,6 +82,8 @@ export default function UserEditPage({self}: {self?: boolean} = {}) {
     setActiveTab(key);
     window.location.hash = key === DEFAULT_TAB ? "" : key;
   };
+  // view mode: master-detail (双栏) or tabs (顶部标签页)
+  const [viewMode, setViewMode] = React.useState<"master-detail" | "tabs">("master-detail");
   const [organization, setOrganization] = React.useState<any>({});
   const [mfaItems, setMfaItems] = React.useState<any[]>([]);
   const [removingMfa, setRemovingMfa] = React.useState(false);
@@ -1199,6 +1201,24 @@ export default function UserEditPage({self}: {self?: boolean} = {}) {
       backTo={self ? "/" : "/users"}
       onSave={save}
       saving={saving}
+      extraActions={tabNames.length > 1 ? (
+        <div className="flex items-center gap-1 rounded-md border p-0.5">
+          <button
+            onClick={() => setViewMode("master-detail")}
+            className={`rounded p-1.5 transition-colors ${viewMode === "master-detail" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"}`}
+            title="双栏视图"
+          >
+            <PanelLeft className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => setViewMode("tabs")}
+            className={`rounded p-1.5 transition-colors ${viewMode === "tabs" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"}`}
+            title="标签页视图"
+          >
+            <Rows3 className="h-4 w-4" />
+          </button>
+        </div>
+      ) : null}
     >
       {isSelf && user.needUpdatePassword ? (
         <Alert variant="warning" className="mb-4">
@@ -1226,6 +1246,35 @@ export default function UserEditPage({self}: {self?: boolean} = {}) {
           <div className={formGridClass}>
             {rowsOfTab(tabNames[0] ?? "")}
             {extraRows}
+          </div>
+        ) : viewMode === "master-detail" ? (
+          // 双栏视图：左侧 tab 导航，右侧内容
+          <div className="flex gap-6">
+            <div className="w-44 flex-shrink-0 space-y-1 border-r pr-4">
+              {tabNames.map((tab) => {
+                const tabValue = tab || DEFAULT_TAB;
+                const isActive = currentTab === tabValue;
+                return (
+                  <div
+                    key={tabValue}
+                    onClick={() => selectTab(tabValue)}
+                    className={`cursor-pointer rounded-md px-3 py-2 text-sm transition-colors ${
+                      isActive
+                        ? "bg-primary/10 font-medium text-primary border-l-2 border-primary"
+                        : "text-muted-foreground hover:bg-accent border-l-2 border-transparent"
+                    }`}
+                  >
+                    {tab === "" ? i18next.t("general:Default") : tab}
+                  </div>
+                );
+              })}
+            </div>
+            <div className="flex-1">
+              <div className={formGridClass}>
+                {rowsOfTab(currentTab === DEFAULT_TAB ? "" : currentTab)}
+                {currentTab === (tabNames[0] || DEFAULT_TAB) ? extraRows : null}
+              </div>
+            </div>
           </div>
         ) : (
           <Tabs value={currentTab} onValueChange={selectTab}>
